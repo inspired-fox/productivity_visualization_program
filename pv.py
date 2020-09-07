@@ -7,12 +7,15 @@ import sys
 #sys.setrecursionlimit(200000)
 
 var = 1
+sum = 0
 root = tk.Tk()
 list_label = []
 list_text = []
 list_time = []
 list_starttime = []
 list_endtime = []
+flag_list = []
+elapsed_time_list = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
 list_time_start = []
 list_time_stop = []
@@ -24,74 +27,92 @@ after_id_list = []
 INTERVAL = 10
 
 def getText(event):
-    #global var
-    #print(var)
-    #var = var_text.get()
-    print(event)
+    #print(event)
     index_num = list_time.index(event)
-    print(index_num)
     startButtonClick(index_num)
     
 
-def startButtonClick(start_button):
+def startButtonClick(Index):
     print("start")
-    global list_time_start   
+    global list_time_start
+    global flag_list   
     #print(list_time_start)
-    #print(len(list_time_start))
-    #list_index = list_time_start.index(start_button)
-    #print(str(list_time[start_button].cget("text")) + " " + "okkkkkkkkkkkkkkk")
-    if(list_time[start_button].cget("text") == "0.00"):
-        list_index = start_button
+   
+    if(elapsed_time_list[Index] == 0.0):
+        #初回動作c
         start_time = time.time()
-        list_starttime[start_button] = start_time
-        #print(list_index)
-        #print(start_time)
-        update_time(list_index, start_time)
-        #root.after(INTERVAL, update_time(list_index, start_time))
-    elif(list_time[start_button].cget("text") == list_endtime[start_button]):
-        list_index = start_button
-        start_time = list_starttime[start_button]
-        #print(list_index)
-        #print(start_time)
-        update_time(list_index, start_time)
-        #root.after(INTERVAL, update_time(list_index, start_time))
+        flag_list[Index] = 1
+        list_starttime[Index] = start_time
+        update_time(Index, start_time)
+    else:
+        if(flag_list[Index] == 0):
+            start_time = time.time()
+            list_starttime[Index] = start_time
+            update_time(Index, start_time)
+        else:
+            start_time = list_starttime[Index]
+            update_time(Index, start_time)
 
 def stopButtonClick(stop_button):
+    global flag_list
+    global elapsed_time_list
+    global sum
+    index_num = list_time.index(stop_button)
+
     print("stop")
     index_num = list_time.index(stop_button)
     root.after_cancel(after_id_list[index_num])
     list_endtime[index_num] = list_time[index_num].cget("text")
     print("stop " + list_endtime[index_num])
+    flag_list[index_num] = 0
+    elapsed_time_list[index_num] = sum
+    print(elapsed_time_list)
 
 def update_time(Index, st_time):
     global list_time
-    print(Index)
-    print(st_time)
+    global flag_list
+    global elapsed_time_list
+    global sum
+
+    Hour = 0
+    Min = 0
+    Sec = 0.0
+
+    #print(st_time)
     after_id_list[Index] = root.after(50, lambda: update_time(Index, st_time))
+    
     now_time = time.time()
-    elapsed_time = now_time - st_time
-    #print(str(elapsed_time) + " " + " " + str(now_time) + " " + " " + str(st_time))
-    #elapsed_time_str = "{:4.2f}".format(elapsed_time)
-    #elapsed_time_str = '{:.2f}'.format(elapsed_time)
-    #list_time[Index].config(text=elapsed_time_str)
-    elapsed_time_str = "{:.2f}".format(elapsed_time)
+    #elapsed_time_list[Index] = now_time - st_time
+    if(elapsed_time_list[Index] != 0.0):
+        #前回のタイマー結果を加算
+        #if(flag_list[Index] == 0):
+        #タイマーが再開された時
+        '''
+        print("-----")
+        print(elapsed_time_list[Index])
+        print(now_time - st_time)
+        print("----")
+        '''
+        sum = elapsed_time_list[Index] + now_time - st_time
+        Hour = int((sum / 60) / 60)
+        Min = int(sum / 60)
+        Sec = sum % 60
+        flag_list[Index] = 1
+
+
+    else:
+        #初めてのタイマー起動
+        elapsed_time_list[Index] = now_time - st_time
+        Hour = int((elapsed_time_list[Index] / 60) / 60)
+        Min = int(elapsed_time_list[Index] / 60)
+        Sec = elapsed_time_list[Index] % 60
+        flag_list[Index] = 1
+
+    elapsed_time_str = str(Hour) + ":" + str(Min) + ":" + format(Sec, '.1f')
+    #elapsed_time_str = "{0}:{1}:{2:.2f}".format(Hour, Min, Sec)
     list_time[Index].configure(text=elapsed_time_str)   
-    #list_time[Index] = elapsed_time_str
-   
-    """
-    while True:
-        now_time = time.time()
-        elapsed_time = now_time - st_time
-        print(str(elapsed_time) + " " + " " + str(now_time) + " " + " " + str(st_time))
-        #elapsed_time_str = "{:4.2f}".format(elapsed_time)
-        #elapsed_time_str = '{:.2f}'.format(elapsed_time)
-        #list_time[Index].config(text=elapsed_time_str)
-        print(type(elapsed_time))
-        elapsed_time_str = "{:.2f}".format(elapsed_time)
-        print(type(elapsed_time_str))
-        list_time[Index].configure(text=elapsed_time_str)   
-        #list_time[Index] = elapsed_time_str
-     """  
+    
+ 
 
 def inc_command():
     global var
@@ -102,30 +123,32 @@ def inc_command():
         label.place(x=40, y=30 + (var * 50 ))
         text = tk.Entry(root)
         if(var == 1):
-            text.insert(tk.END, '(作業全体時間)')
+            text.insert(tk.END, '作業全体時間')
         else:
             text.insert(tk.END, 'ex twitter')
         
         list_text.append(text)
-        text.place(x=40, y=30 + (var * 50 ) + 20)
+        text.place(x=40, y=30 + (var * 50 ) + 20, width =100)
 
         #ストップウォッチの描画
-        label_time = tk.Label(root, text="0.00", width=6,font=("", 25, "bold"),)
+        label_time = tk.Label(root, text="0.00", width=10,font=("", 25, "bold"),)
         label_time.place(x=200, y=25 + (var * 50) + 20)
         list_time.append(label_time)
         after_id_list.append(0)
         list_starttime.append("0.00")
         list_endtime.append("0.00")
+        flag_list.append(0)
+        #elapsed_time_list.append(0.0)
 
         start_Button = tk.Button(root, text='START', command=lambda: getText(label_time))
         #start_Button.bind("<Button-1>", startButtonClick(list_time_start))
-        start_Button.place(x=300, y=25 + (var * 50) + 20)
+        start_Button.place(x=400, y=25 + (var * 50) + 20)
         list_time_start.append(start_Button)
         #startButtonClick(start_Button)
 
         stop_Button = tk.Button(root, text='STOP', command=lambda: stopButtonClick(label_time))
         #stop_Button.bind("<Button-1>", stopButtonClick(label_time))
-        stop_Button.place(x=350, y=25 + (var * 50) + 20)   
+        stop_Button.place(x=450, y=25 + (var * 50) + 20)   
         list_time_stop.append(stop_Button)
 
         
@@ -134,6 +157,7 @@ def inc_command():
     else:
         print("変数は6つまで")
 
+
 def dec_command():
     global var
     global list_label
@@ -141,6 +165,8 @@ def dec_command():
     global list_time
     global list_time_start
     global list_time_stop
+    global elapsed_time_list
+
     if(len(list_label) != 0):       
         list_label[var-2].destroy()
         list_text[var-2].destroy()
@@ -152,6 +178,7 @@ def dec_command():
         del list_time[var-2]
         del list_time_start[var-2]
         del list_time_stop[var-2]
+        elapsed_time_list[var-2] = 0.0
 
         var = var - 1
     else:
@@ -159,6 +186,40 @@ def dec_command():
 
 def output():
     print("結果の出力")
+    global list_time
+    global elapsed_time_list
+    index_num = 0
+    split_list = []
+    Hour = 0
+    Min = 0
+    Sec = 0.0
+    r = 0.0
+
+    WWT = 0 #作業全体時間
+    torino = 0
+
+    for i in list_time:
+        stopButtonClick(i)
+        split_list = ((list_time[index_num].cget("text")).split(":"))
+        Hour = int(split_list[0])
+        Min = int(split_list[1])
+        Sec = split_list[2]
+        #print(split_list)
+        if (index_num == 0):
+            #WWT = format((Hour * 60.0 * 60.0 + Min * 60.0 + Sec), '.1f')
+            WWT = float(Hour) * 60.0 * 60.0 + float(Min) * 60.0 + float(Sec)
+        else:
+            #torino = format((Hour * 60.0 * 60.0 + Min * 60.0 + Sec), '.1f') 
+            torino = float(Hour) * 60.0 * 60.0 + float(Min) * 60.0 + float(Sec)
+
+
+        index_num += 1
+    print("作業効率:")
+    print(WWT / torino)
+    r = WWT / torino
+
+    ans = tk.Label(text='今日の作業効率は' + format(r, '.1f'),font=("", 15, "bold"),)
+    ans.place(x=450, y=5)
 
 # メイン
 if __name__ == '__main__':
