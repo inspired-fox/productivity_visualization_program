@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import tkinter as tk
+import matplotlib as plt
+#import numpy as np
 import time
-import sys
+import sys;print(sys.version);print(sys.path)
+#import sys
 
 #sys.setrecursionlimit(200000)
 
@@ -110,7 +113,9 @@ def update_time(Index, st_time):
 
     elapsed_time_str = str(Hour) + ":" + str(Min) + ":" + format(Sec, '.1f')
     #elapsed_time_str = "{0}:{1}:{2:.2f}".format(Hour, Min, Sec)
-    list_time[Index].configure(text=elapsed_time_str)   
+    list_time[Index].configure(text=elapsed_time_str)
+
+
     
  
 
@@ -194,9 +199,11 @@ def output():
     Min = 0
     Sec = 0.0
     r = 0.0
+    sum = 0.0
 
     WWT = 0 #作業全体時間
-    torino = 0
+    OTV = [] #その他の変数時間
+    
 
     for i in list_time:
         stopButtonClick(i)
@@ -210,16 +217,40 @@ def output():
             WWT = float(Hour) * 60.0 * 60.0 + float(Min) * 60.0 + float(Sec)
         else:
             #torino = format((Hour * 60.0 * 60.0 + Min * 60.0 + Sec), '.1f') 
-            torino = float(Hour) * 60.0 * 60.0 + float(Min) * 60.0 + float(Sec)
-
+            OTV.append(float(Hour) * 60.0 * 60.0 + float(Min) * 60.0 + float(Sec))
 
         index_num += 1
+
     print("作業効率:")
-    print(WWT / torino)
-    r = WWT / torino
+
+    for i in OTV:
+        sum = sum + i
+
+    print(WWT / sum)
+    r = WWT / sum
 
     ans = tk.Label(text='今日の作業効率は' + format(r, '.1f'),font=("", 15, "bold"),)
     ans.place(x=450, y=5)
+    mapplot(ans)
+
+def mapplot(ans_num):
+    #描画領域
+    fig, ax = plt.subplots(1, 1)
+
+    #y軸方向の描画幅を指定
+    ax.set_ylim((-1.1, 1.1))
+
+    #x軸ー時刻
+    x = np.arange(0, 24, 1)
+
+    #y軸-作業効率
+    y = ans_num
+
+    #グラフの描画
+    ax.plot(x, y, color='green')
+    plt.show()
+
+
 
 # メイン
 if __name__ == '__main__':
