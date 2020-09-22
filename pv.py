@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import tkinter as tk
-import matplotlib as plt
-#import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
 import time
+import random
 import sys;print(sys.version);print(sys.path)
 #import sys
-
+#%matplotlib
 #sys.setrecursionlimit(200000)
 
 var = 1
@@ -26,6 +28,13 @@ start_Button = tk.Button()
 stop_Button = tk.Button()
 after_id_list = []
 
+canvas_flag = 0
+fig = 0
+canvas = 0
+ax1 = 0
+ax2 = 0
+ax3 = 0
+ax4 = 0
 #タイマーの更新頻度[ms]
 INTERVAL = 10
 
@@ -153,7 +162,7 @@ def inc_command():
 
         stop_Button = tk.Button(root, text='STOP', command=lambda: stopButtonClick(label_time))
         #stop_Button.bind("<Button-1>", stopButtonClick(label_time))
-        stop_Button.place(x=450, y=25 + (var * 50) + 20)   
+        stop_Button.place(x=480, y=25 + (var * 50) + 20)   
         list_time_stop.append(stop_Button)
 
         
@@ -190,7 +199,7 @@ def dec_command():
         print("リストが空")
 
 def output():
-    print("結果の出力")
+    #print("結果の出力")
     global list_time
     global elapsed_time_list
     index_num = 0
@@ -206,7 +215,7 @@ def output():
     
 
     for i in list_time:
-        stopButtonClick(i)
+        #stopButtonClick(i)
         split_list = ((list_time[index_num].cget("text")).split(":"))
         Hour = int(split_list[0])
         Min = int(split_list[1])
@@ -221,34 +230,115 @@ def output():
 
         index_num += 1
 
-    print("作業効率:")
+    #print("作業効率:")
 
     for i in OTV:
         sum = sum + i
 
-    print(WWT / sum)
+    #print(WWT / sum)
     r = WWT / sum
 
     ans = tk.Label(text='今日の作業効率は' + format(r, '.1f'),font=("", 15, "bold"),)
     ans.place(x=450, y=5)
     mapplot(ans)
+    root.after(1000, output)
+
 
 def mapplot(ans_num):
     #描画領域
-    fig, ax = plt.subplots(1, 1)
+    #fig, ax = plt.subplots(1, 1)
+    global canvas_flag
+    global fig
+    global canvas
+    global ax1
+    global ax2
+    global ax3 
+    global ax4
+    
+    if canvas_flag == 0:
+        fig = plt.figure()
+    
 
+    '''
     #y軸方向の描画幅を指定
     ax.set_ylim((-1.1, 1.1))
 
     #x軸ー時刻
-    x = np.arange(0, 24, 1)
+    x = np.arange(0, 100, 0.5)
 
+    Hz = 5
     #y軸-作業効率
-    y = ans_num
+    y = np.sin(2.0 * np.pi * (x * Hz) / 100)
 
     #グラフの描画
     ax.plot(x, y, color='green')
     plt.show()
+
+    #canvas = FigureCanvasTkAgg(fig, master=root)
+    canvas = tk.Cancas(root, width=300, height=300, bg="#DDDDDD")
+    canvas.pack()
+    draw(canvas)
+    #plot_widget = canvas.get_tk_widget()
+    #fig.canvas.draw()
+    #canvas.get_tk_widget().pack(side=tk.BOTTOM)
+    '''
+    w = random.randrange(5)
+    x1 = np.linspace(0.0, 5.0)
+    #x1 = np.random.uniform(0, 5, (5, 10))
+    y1 = np.cos(w * np.pi * x1) * np.exp(-x1)
+    x2 = np.linspace(0.0, 3.0)
+    y2 = np.cos(2 * np.pi * x2) * np.exp(-x1)
+
+    #ax1 instance
+    if canvas_flag == 0:
+        ax1 = fig.add_subplot(221)
+    else:
+        ax1.cla()
+    #print("number")
+    #print(y1)
+    ax1.plot(x1, y1)
+    ax1.set_title('line plot')
+    ax1.set_ylabel('Damped oscillation')
+    #print(type(ax1))
+
+    #ax2 instance
+    if canvas_flag == 0:
+        ax2 = fig.add_subplot(222)
+    else:
+        ax2.cla()
+
+    ax2.scatter(x1, y1, marker='o')
+    ax2.set_title('Scatter plot')
+
+    #ax3 instance
+    if canvas_flag == 0:
+        ax3 = fig.add_subplot(223)
+    else:
+        ax3.cla()
+
+    ax3.plot(x2,y2)
+    ax3.set_ylabel('Damped oscillation')
+    ax3.set_xlabel('time (s)')
+
+    #ax4 instance
+    if canvas_flag == 0:
+        ax4 = fig.add_subplot(224)
+    else:
+        ax4.cla()
+
+    ax4.scatter(x2, y2, marker='o')
+    ax4.set_xlabel('time (s)')
+
+    #Drawing
+    #plt.show()
+    if canvas_flag == 0:
+        canvas = FigureCanvasTkAgg(fig, master=root)
+        fig.canvas.draw()
+        canvas.get_tk_widget().pack(side = tk.BOTTOM)
+        canvas_flag = 1
+    else:
+        fig.canvas.draw()
+    
 
 
 
@@ -259,7 +349,7 @@ if __name__ == '__main__':
     try:
         while True:
             root.title("環境係数による生産性の測定")
-            root.geometry("700x400")
+            root.geometry("700x1000")
 
             #割り込みを行う変数入力
             var1 = tk.Label(text='変数の数')
@@ -270,7 +360,7 @@ if __name__ == '__main__':
             #変数増加ボタン
             inc_Button = tk.Button(root, text='増やす', command=inc_command)
             inc_Button.place(x=190, y=5)
-    
+
             #変数減少ボタン
             dec_Button = tk.Button(root, text='減らす', command=dec_command)
             dec_Button.place(x=290, y=5)
